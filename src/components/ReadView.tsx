@@ -127,39 +127,70 @@ const ReadView: React.FC<ReadViewProps> = ({
           <p>Play a story and save it to see it here!</p>
         </div>
       ) : (
-        <div className="saved-stories-table-container">
-          <table className="saved-stories-table">
-            <thead>
-              <tr>
-                <th>Story Title</th>
-                <th>Template Title</th>
-                <th>Date Saved</th>
-                <th>Time Saved</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tableData.map(({ instance, storyTitle, templateTitle }) => (
-                <tr key={instance.id} className="table-row">
-                  <td className="story-title-cell">{storyTitle}</td>
-                  <td className="template-title-cell">{templateTitle}</td>
-                  <td className="date-cell">{instance.savedAt.toLocaleDateString()}</td>
-                  <td className="time-cell">
+        <>
+          {/* Desktop table view */}
+          <div className="saved-stories-table-container desktop-only">
+            <table className="saved-stories-table">
+              <thead>
+                <tr>
+                  <th>Story Title</th>
+                  <th>Template Title</th>
+                  <th>Date Saved</th>
+                  <th>Time Saved</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tableData.map(({ instance, storyTitle, templateTitle }) => (
+                  <tr key={instance.id} className="table-row">
+                    <td className="story-title-cell">{storyTitle}</td>
+                    <td className="template-title-cell">{templateTitle}</td>
+                    <td className="date-cell">{instance.savedAt.toLocaleDateString()}</td>
+                    <td className="time-cell">
+                      {instance.savedAt.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </td>
+                    <td className="actions-cell">
+                      <button className="view-story-btn" onClick={() => handleViewStory(instance)}>
+                        View Story
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile card view */}
+          <div className="saved-stories-cards mobile-only">
+            {tableData.map(({ instance, storyTitle, templateTitle }) => (
+              <div key={instance.id} className="saved-story-card">
+                <div className="saved-story-header">
+                  <h3 className="saved-story-title">{storyTitle}</h3>
+                  <div className="saved-story-template">
+                    Template: {templateTitle}
+                  </div>
+                </div>
+                <div className="saved-story-meta">
+                  <div className="saved-story-date">
+                    {instance.savedAt.toLocaleDateString()} at {' '}
                     {instance.savedAt.toLocaleTimeString([], {
                       hour: '2-digit',
                       minute: '2-digit',
                     })}
-                  </td>
-                  <td className="actions-cell">
-                    <button className="view-story-btn" onClick={() => handleViewStory(instance)}>
-                      View Story
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </div>
+                <div className="saved-story-actions">
+                  <button className="view-story-btn" onClick={() => handleViewStory(instance)}>
+                    View Story
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
