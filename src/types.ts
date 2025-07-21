@@ -39,6 +39,7 @@ export interface SavedStory {
   savedAt: Date;
   blankValues: { [itemId: string]: string };
   customTitle?: string;
+  authorName?: string;
 }
 
 export interface AppState {

@@ -17,6 +17,7 @@ function App() {
   });
 
   const [initialTemplateFilter, setInitialTemplateFilter] = useState<string | undefined>(undefined);
+  const [viewStoryAfterSave, setViewStoryAfterSave] = useState<SavedStory | null>(null);
 
   // Load stories and saved instances from localStorage on startup
   useEffect(() => {
@@ -173,8 +174,9 @@ function App() {
         savedStories: updatedInstances,
       }));
 
-      // Navigate back to main
-      setMode('main');
+      // Set the story to view and navigate to read mode
+      setViewStoryAfterSave(instance);
+      setMode('read');
     } catch (error) {
       console.error('Failed to save story instance:', error);
       alert('Failed to save story. Please try again.');
@@ -201,6 +203,24 @@ function App() {
     }
   };
 
+  const deleteSavedStory = (storyId: string) => {
+    try {
+      const updatedInstances = appState.savedStories.filter((story) => story.id !== storyId);
+
+      // Update localStorage
+      localStorage.setItem('madlibs-saved-instances', JSON.stringify(updatedInstances));
+
+      // Update state
+      setAppState((prev) => ({
+        ...prev,
+        savedStories: updatedInstances,
+      }));
+    } catch (error) {
+      console.error('Failed to delete saved story:', error);
+      alert('Failed to delete saved story. Please try again.');
+    }
+  };
+
 
   return (
     <div className="App">
@@ -217,6 +237,7 @@ function App() {
             className={appState.mode === 'read' ? 'active' : ''}
             onClick={() => {
               setInitialTemplateFilter(undefined);
+              setViewStoryAfterSave(null);
               setMode('read');
             }}
           >
@@ -260,11 +281,14 @@ function App() {
             savedInstances={appState.savedStories}
             onBackToMain={() => {
               setInitialTemplateFilter(undefined);
+              setViewStoryAfterSave(null);
               setMode('main');
             }}
             onUpdateSavedStory={updateSavedStory}
+            onDeleteSavedStory={deleteSavedStory}
             onPlayTemplate={playTemplate}
             initialTemplateFilter={initialTemplateFilter}
+            viewSpecificStory={viewStoryAfterSave}
           />
         )}
       </main>

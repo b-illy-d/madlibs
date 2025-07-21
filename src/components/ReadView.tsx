@@ -6,8 +6,10 @@ interface ReadViewProps {
   savedInstances: SavedStory[];
   onBackToMain: () => void;
   onUpdateSavedStory: (updatedStory: SavedStory) => void;
+  onDeleteSavedStory: (storyId: string) => void;
   onPlayTemplate: (template: Template) => void;
   initialTemplateFilter?: string;
+  viewSpecificStory?: SavedStory | null;
 }
 
 interface StoryViewProps {
@@ -23,8 +25,10 @@ const ReadView: React.FC<ReadViewProps> = ({
   savedInstances,
   onBackToMain,
   onUpdateSavedStory,
+  onDeleteSavedStory,
   onPlayTemplate,
   initialTemplateFilter,
+  viewSpecificStory,
 }) => {
   const [selectedInstance, setSelectedInstance] = useState<SavedStory | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
@@ -64,9 +68,13 @@ const ReadView: React.FC<ReadViewProps> = ({
       )
       .join(' ');
 
+    const titleWithAuthor = instance.authorName 
+      ? `"${instance.customTitle || story.title}"\nBy: ${instance.authorName}`
+      : `"${instance.customTitle || story.title}"`;
+
     const shareData = {
       title: instance.customTitle || story.title,
-      text: `"${instance.customTitle || story.title}"\n\n${storyContent}`,
+      text: `${titleWithAuthor}\n\n${storyContent}`,
       url: window.location.href,
     };
 
@@ -81,6 +89,13 @@ const ReadView: React.FC<ReadViewProps> = ({
     }
   };
 
+  const handleDeleteStory = (instance: SavedStory) => {
+    const storyTitle = instance.customTitle || templates.find(t => t.id === instance.storyId)?.title || 'Unknown Story';
+    if (window.confirm(`Are you sure you want to delete "${storyTitle}"?`)) {
+      onDeleteSavedStory(instance.id);
+    }
+  };
+
   const fallbackShare = (shareData: { title: string; text: string; url: string }) => {
     // Fallback to copying to clipboard
     const textToShare = `${shareData.text}\n\n${shareData.url}`;
@@ -89,14 +104,14 @@ const ReadView: React.FC<ReadViewProps> = ({
       navigator.clipboard
         .writeText(textToShare)
         .then(() => {
-          alert('Story copied to clipboard! You can now paste it to share.');
+          // Story copied to clipboard silently
         })
         .catch(() => {
-          // Final fallback - show text in alert
+          // Final fallback - show text in alert only when clipboard fails
           alert(`Copy this text to share:\n\n${textToShare}`);
         });
     } else {
-      // Final fallback - show text in alert
+      // Final fallback - show text in alert only when clipboard is not available
       alert(`Copy this text to share:\n\n${textToShare}`);
     }
   };
@@ -116,6 +131,17 @@ const ReadView: React.FC<ReadViewProps> = ({
       }
     }
   }, [savedInstances]);
+
+  // Handle viewSpecificStory prop - automatically view a specific story
+  useEffect(() => {
+    if (viewSpecificStory) {
+      const story = templates.find((s) => s.id === viewSpecificStory.storyId);
+      if (story) {
+        setSelectedInstance(viewSpecificStory);
+        setSelectedTemplate(story);
+      }
+    }
+  }, [viewSpecificStory, templates]);
 
   if (selectedInstance && selectedTemplate) {
     return (
@@ -195,6 +221,7 @@ const ReadView: React.FC<ReadViewProps> = ({
               <thead>
                 <tr>
                   <th>Story Title</th>
+                  <th>Author</th>
                   <th>Template Title</th>
                   <th>Date Saved</th>
                   <th>Time Saved</th>
@@ -205,6 +232,7 @@ const ReadView: React.FC<ReadViewProps> = ({
                 {tableData.map(({ instance, storyTitle, templateTitle }) => (
                   <tr key={instance.id} className="table-row">
                     <td className="story-title-cell">{storyTitle}</td>
+                    <td className="author-cell">{instance.authorName || '—'}</td>
                     <td className="template-title-cell">{templateTitle}</td>
                     <td className="date-cell">{instance.savedAt.toLocaleDateString()}</td>
                     <td className="time-cell">
@@ -223,6 +251,13 @@ const ReadView: React.FC<ReadViewProps> = ({
                       >
                         Share
                       </button>
+                      <button
+                        className="delete-saved-story-btn"
+                        onClick={() => handleDeleteStory(instance)}
+                        title="Delete story"
+                      >
+                        ×
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -235,8 +270,20 @@ const ReadView: React.FC<ReadViewProps> = ({
             {tableData.map(({ instance, storyTitle, templateTitle }) => (
               <div key={instance.id} className="saved-story-card">
                 <div className="saved-story-header">
-                  <h3 className="saved-story-title">{storyTitle}</h3>
-                  <div className="saved-story-template">Template: {templateTitle}</div>
+                  <div className="saved-story-header-content">
+                    <h3 className="saved-story-title">{storyTitle}</h3>
+                    {instance.authorName && (
+                      <div className="saved-story-author">By: {instance.authorName}</div>
+                    )}
+                    <div className="saved-story-template">Template: {templateTitle}</div>
+                  </div>
+                  <button
+                    className="delete-saved-story-btn"
+                    onClick={() => handleDeleteStory(instance)}
+                    title="Delete story"
+                  >
+                    ×
+                  </button>
                 </div>
                 <div className="saved-story-meta">
                   <div className="saved-story-date">
@@ -274,10 +321,12 @@ const StoryView: React.FC<StoryViewProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editedValues, setEditedValues] = useState<{ [itemId: string]: string }>({});
   const [editedTitle, setEditedTitle] = useState(savedInstance.customTitle || template.title);
+  const [editedAuthor, setEditedAuthor] = useState(savedInstance.authorName || '');
 
   // Update local state when savedInstance prop changes
   useEffect(() => {
     setEditedTitle(savedInstance.customTitle || template.title);
+    setEditedAuthor(savedInstance.authorName || '');
   }, [savedInstance, template.title]);
 
   const handleEdit = () => {
@@ -293,6 +342,7 @@ const StoryView: React.FC<StoryViewProps> = ({
       blankValues: editedValues,
       customTitle:
         editedTitle.trim() !== template.title ? editedTitle.trim() : savedInstance.customTitle,
+      authorName: editedAuthor.trim() || undefined,
     };
 
     onUpdateSavedStory(updatedStory);
@@ -302,6 +352,7 @@ const StoryView: React.FC<StoryViewProps> = ({
   const handleCancel = () => {
     setEditedValues({});
     setEditedTitle(savedInstance.customTitle || template.title);
+    setEditedAuthor(savedInstance.authorName || '');
     setIsEditing(false);
   };
 
@@ -323,6 +374,17 @@ const StoryView: React.FC<StoryViewProps> = ({
             value={editedTitle}
             onChange={(e) => setEditedTitle(e.target.value)}
             placeholder="Enter story title..."
+          />
+        </div>
+
+        <div className="edit-author-section">
+          <label className="edit-author-label">Author Name:</label>
+          <input
+            type="text"
+            className="edit-author-input"
+            value={editedAuthor}
+            onChange={(e) => setEditedAuthor(e.target.value)}
+            placeholder="Enter author name..."
           />
         </div>
 
@@ -432,6 +494,11 @@ const StoryView: React.FC<StoryViewProps> = ({
     <div className="story-view">
       <div className="story-view-header">
         <h2>{displayTitle}</h2>
+        {savedInstance.authorName && (
+          <div className="story-author-info">
+            <span className="story-author">By: {savedInstance.authorName}</span>
+          </div>
+        )}
         {savedInstance.customTitle && (
           <div className="template-info">
             <span className="template-title">Template: {template.title}</span>

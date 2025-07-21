@@ -50,6 +50,40 @@ const PlayMode: React.FC<PlayModeProps> = ({ story, onBackToMain, onSaveStoryIns
 
   const handlePlayStory = () => {
     if (areAllBlanksFilled()) {
+      // Automatically save the story when creating it
+      const customTitle = prompt('Enter a title for your story:', story.title);
+      
+      // If user cancels, don't proceed
+      if (customTitle === null) {
+        return;
+      }
+
+      const authorName = prompt('Enter the author\'s name:', '');
+      
+      // If user cancels, don't proceed
+      if (authorName === null) {
+        return;
+      }
+
+      // Create the saved story instance
+      const blankValueMap: { [itemId: string]: string } = {};
+      blankValues.forEach((blank) => {
+        blankValueMap[blank.itemId] = blank.value;
+      });
+
+      const savedInstance: SavedStory = {
+        id: Date.now().toString(),
+        storyId: story.id,
+        savedAt: new Date(),
+        blankValues: blankValueMap,
+        customTitle: customTitle.trim() || story.title,
+        authorName: authorName.trim() || undefined,
+      };
+
+      // Save the story automatically
+      onSaveStoryInstance(savedInstance);
+      
+      // Show the completed story
       setShowCompletedStory(true);
     }
   };
@@ -81,7 +115,7 @@ const PlayMode: React.FC<PlayModeProps> = ({ story, onBackToMain, onSaveStoryIns
       </div>
 
       <div className="play-instructions">
-        <p>Fill in all the blanks below, then click "Create Story" to see your completed madlib!</p>
+        <p>Fill in all the blanks below, then click "Create Story" to create and save your completed madlib!</p>
       </div>
 
       <div className="blanks-form">
@@ -164,29 +198,6 @@ const CompletedStory: React.FC<CompletedStoryProps> = ({
     return blank ? blank.value : '';
   };
 
-  const handleSaveStory = () => {
-    const customTitle = prompt('Enter a title for your saved story:', story.title);
-
-    // If user cancels or enters empty string, don't save
-    if (customTitle === null || customTitle.trim() === '') {
-      return;
-    }
-
-    const blankValueMap: { [itemId: string]: string } = {};
-    blankValues.forEach((blank) => {
-      blankValueMap[blank.itemId] = blank.value;
-    });
-
-    const savedInstance: SavedStory = {
-      id: Date.now().toString(),
-      storyId: story.id,
-      savedAt: new Date(),
-      blankValues: blankValueMap,
-      customTitle: customTitle.trim(),
-    };
-
-    onSaveStoryInstance(savedInstance);
-  };
 
   const renderStoryContent = () => {
     return (story.sentences || []).map((sentence, sentenceIndex) => (
@@ -216,9 +227,6 @@ const CompletedStory: React.FC<CompletedStoryProps> = ({
       <div className="completed-header">
         <h2>{story.title}</h2>
         <div className="completed-actions">
-          <button className="save-story-btn" onClick={handleSaveStory}>
-            Save This Story
-          </button>
           <button className="start-over-btn" onClick={onStartOver}>
             Start Over
           </button>

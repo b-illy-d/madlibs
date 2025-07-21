@@ -1014,6 +1014,27 @@
   background-color: #218838;
 }
 
+.delete-saved-story-btn {
+  background: none;
+  border: none;
+  color: #dc3545;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.delete-saved-story-btn:hover {
+  background-color: #f8d7da;
+}
+
 /* Story View Styles */
 .story-view {
   display: flex;
@@ -1120,18 +1141,21 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.edit-title-section {
+.edit-title-section,
+.edit-author-section {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.edit-title-label {
+.edit-title-label,
+.edit-author-label {
   font-weight: bold;
   color: #282c34;
 }
 
-.edit-title-input {
+.edit-title-input,
+.edit-author-input {
   padding: 0.75rem;
   border: 2px solid #ddd;
   border-radius: 4px;
@@ -1139,7 +1163,8 @@
   transition: border-color 0.2s;
 }
 
-.edit-title-input:focus {
+.edit-title-input:focus,
+.edit-author-input:focus {
   outline: none;
   border-color: #61dafb;
 }
@@ -1638,7 +1663,8 @@
     gap: 2rem;
   }
 
-  .edit-title-input {
+  .edit-title-input,
+  .edit-author-input {
     padding: 1rem;
     font-size: 1rem;
   }
@@ -1983,6 +2009,14 @@
 
   .saved-story-header {
     margin-bottom: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .saved-story-header-content {
+    flex: 1;
   }
 
   .saved-story-title {
