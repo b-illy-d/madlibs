@@ -1012,6 +1012,7 @@
 
 .actions-cell {
   text-align: center;
+  white-space: nowrap;
 }
 
 .view-story-btn {
@@ -1028,6 +1029,23 @@
 
 .view-story-btn:hover {
   background-color: #5a2d91;
+}
+
+.share-story-btn {
+  padding: 0.5rem 1rem;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+  margin-left: 0.5rem;
+}
+
+.share-story-btn:hover {
+  background-color: #218838;
 }
 
 /* Story View Styles */
@@ -2034,13 +2052,25 @@
 
   .saved-story-actions {
     display: flex;
-    justify-content: flex-end;
+    gap: 0.75rem;
+    justify-content: space-between;
   }
 
-  .saved-story-actions .view-story-btn {
-    width: 100%;
+  .saved-story-actions .view-story-btn,
+  .saved-story-actions .share-story-btn {
+    flex: 1;
     padding: 0.75rem;
     font-size: 1rem;
+    margin-left: 0;
+  }
+
+  .saved-story-actions .share-story-btn {
+    background-color: #28a745;
+    color: white;
+  }
+
+  .saved-story-actions .share-story-btn:hover {
+    background-color: #218838;
   }
 }
 

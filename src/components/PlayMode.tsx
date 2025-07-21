@@ -22,7 +22,7 @@ const PlayMode: React.FC<PlayModeProps> = ({ story, onBackToMain, onSaveStoryIns
 
   // Initialize blank values when component mounts
   useEffect(() => {
-    const allContent = (story.sentences || []).flatMap(sentence => sentence.content || []);
+    const allContent = (story.sentences || []).flatMap((sentence) => sentence.content || []);
     const blankItems = allContent.filter(
       (item) => item.type === 'blank',
     ) as StoryContentItemBlankType[];
@@ -81,12 +81,12 @@ const PlayMode: React.FC<PlayModeProps> = ({ story, onBackToMain, onSaveStoryIns
       </div>
 
       <div className="play-instructions">
-        <p>Fill in all the blanks below, then click "Read Story" to see your completed madlib!</p>
+        <p>Fill in all the blanks below, then click "Create Story" to see your completed madlib!</p>
       </div>
 
       <div className="blanks-form">
         {(story.sentences || [])
-          .flatMap(sentence => sentence.content || [])
+          .flatMap((sentence) => sentence.content || [])
           .filter((item) => item.type === 'blank')
           .map((item, index) => {
             const blankItem = item as StoryContentItemBlankType;
@@ -110,7 +110,7 @@ const PlayMode: React.FC<PlayModeProps> = ({ story, onBackToMain, onSaveStoryIns
           onClick={handlePlayStory}
           disabled={!areAllBlanksFilled()}
         >
-          Read Story
+          Create Story
         </button>
       </div>
     </div>

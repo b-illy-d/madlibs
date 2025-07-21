@@ -28,7 +28,9 @@ const ReadView: React.FC<ReadViewProps> = ({
 }) => {
   const [selectedInstance, setSelectedInstance] = useState<SavedStory | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
-  const [selectedTemplateFilter, setSelectedTemplateFilter] = useState<string>(initialTemplateFilter || 'all');
+  const [selectedTemplateFilter, setSelectedTemplateFilter] = useState<string>(
+    initialTemplateFilter || 'all',
+  );
 
   const handleViewStory = (instance: SavedStory) => {
     const story = templates.find((s) => s.id === instance.storyId);
@@ -41,6 +43,62 @@ const ReadView: React.FC<ReadViewProps> = ({
   const handleBackToRead = () => {
     setSelectedInstance(null);
     setSelectedTemplate(null);
+  };
+
+  const handleShareStory = (instance: SavedStory) => {
+    const story = templates.find((s) => s.id === instance.storyId);
+    if (!story) return;
+
+    // Generate the story content for sharing
+    const storyContent = (story.sentences || [])
+      .map((sentence) =>
+        (sentence.content || [])
+          .map((item) => {
+            if (item.type === 'text') {
+              return item.textContent;
+            } else {
+              return instance.blankValues[item.id] || '[missing]';
+            }
+          })
+          .join(''),
+      )
+      .join(' ');
+
+    const shareData = {
+      title: instance.customTitle || story.title,
+      text: `"${instance.customTitle || story.title}"\n\n${storyContent}`,
+      url: window.location.href,
+    };
+
+    // Try to use native share API first
+    if (navigator.share) {
+      navigator.share(shareData).catch((err) => {
+        console.log('Error sharing:', err);
+        fallbackShare(shareData);
+      });
+    } else {
+      fallbackShare(shareData);
+    }
+  };
+
+  const fallbackShare = (shareData: { title: string; text: string; url: string }) => {
+    // Fallback to copying to clipboard
+    const textToShare = `${shareData.text}\n\n${shareData.url}`;
+
+    if (navigator.clipboard) {
+      navigator.clipboard
+        .writeText(textToShare)
+        .then(() => {
+          alert('Story copied to clipboard! You can now paste it to share.');
+        })
+        .catch(() => {
+          // Final fallback - show text in alert
+          alert(`Copy this text to share:\n\n${textToShare}`);
+        });
+    } else {
+      // Final fallback - show text in alert
+      alert(`Copy this text to share:\n\n${textToShare}`);
+    }
   };
 
   const handleUpdateSavedStory = (updatedStory: SavedStory) => {
@@ -72,9 +130,10 @@ const ReadView: React.FC<ReadViewProps> = ({
   }
 
   // Filter saved instances based on selected template
-  const filteredInstances = selectedTemplateFilter === 'all' 
-    ? savedInstances 
-    : savedInstances.filter(instance => instance.storyId === selectedTemplateFilter);
+  const filteredInstances =
+    selectedTemplateFilter === 'all'
+      ? savedInstances
+      : savedInstances.filter((instance) => instance.storyId === selectedTemplateFilter);
 
   // Create table data with story titles
   const tableData = filteredInstances.map((instance) => {
@@ -87,8 +146,8 @@ const ReadView: React.FC<ReadViewProps> = ({
   });
 
   // Get unique templates that have saved stories
-  const availableTemplates = templates.filter(template => 
-    savedInstances.some(instance => instance.storyId === template.id)
+  const availableTemplates = templates.filter((template) =>
+    savedInstances.some((instance) => instance.storyId === template.id),
   );
 
   return (
@@ -106,7 +165,9 @@ const ReadView: React.FC<ReadViewProps> = ({
             >
               <option value="all">All Templates ({savedInstances.length})</option>
               {availableTemplates.map((template) => {
-                const count = savedInstances.filter(instance => instance.storyId === template.id).length;
+                const count = savedInstances.filter(
+                  (instance) => instance.storyId === template.id,
+                ).length;
                 return (
                   <option key={template.id} value={template.id}>
                     {template.title} ({count})
@@ -156,6 +217,12 @@ const ReadView: React.FC<ReadViewProps> = ({
                       <button className="view-story-btn" onClick={() => handleViewStory(instance)}>
                         View Story
                       </button>
+                      <button
+                        className="share-story-btn"
+                        onClick={() => handleShareStory(instance)}
+                      >
+                        Share
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -169,13 +236,11 @@ const ReadView: React.FC<ReadViewProps> = ({
               <div key={instance.id} className="saved-story-card">
                 <div className="saved-story-header">
                   <h3 className="saved-story-title">{storyTitle}</h3>
-                  <div className="saved-story-template">
-                    Template: {templateTitle}
-                  </div>
+                  <div className="saved-story-template">Template: {templateTitle}</div>
                 </div>
                 <div className="saved-story-meta">
                   <div className="saved-story-date">
-                    {instance.savedAt.toLocaleDateString()} at {' '}
+                    {instance.savedAt.toLocaleDateString()} at{' '}
                     {instance.savedAt.toLocaleTimeString([], {
                       hour: '2-digit',
                       minute: '2-digit',
@@ -185,6 +250,9 @@ const ReadView: React.FC<ReadViewProps> = ({
                 <div className="saved-story-actions">
                   <button className="view-story-btn" onClick={() => handleViewStory(instance)}>
                     View Story
+                  </button>
+                  <button className="share-story-btn" onClick={() => handleShareStory(instance)}>
+                    Share
                   </button>
                 </div>
               </div>
@@ -262,7 +330,7 @@ const StoryView: React.FC<StoryViewProps> = ({
           <h3>Edit Blank Values:</h3>
           <div className="edit-blanks-grid">
             {(template.sentences || [])
-              .flatMap(sentence => sentence.content || [])
+              .flatMap((sentence) => sentence.content || [])
               .filter((item) => item.type === 'blank')
               .map((item, index) => {
                 const blankItem = item as any;
@@ -277,8 +345,8 @@ const StoryView: React.FC<StoryViewProps> = ({
                     <input
                       type="text"
                       className={`edit-blank-input ${
-                        (!editedValues[item.id] || editedValues[item.id].trim() === '') 
-                          ? 'edit-blank-input-missing' 
+                        !editedValues[item.id] || editedValues[item.id].trim() === ''
+                          ? 'edit-blank-input-missing'
                           : ''
                       }`}
                       value={editedValues[item.id] || ''}
@@ -348,10 +416,13 @@ const StoryView: React.FC<StoryViewProps> = ({
   // Check for missing blank values
   const getMissingBlanks = () => {
     const allBlanks = (template.sentences || [])
-      .flatMap(sentence => sentence.content || [])
-      .filter(item => item.type === 'blank');
-    
-    return allBlanks.filter(blank => !savedInstance.blankValues[blank.id] || savedInstance.blankValues[blank.id].trim() === '');
+      .flatMap((sentence) => sentence.content || [])
+      .filter((item) => item.type === 'blank');
+
+    return allBlanks.filter(
+      (blank) =>
+        !savedInstance.blankValues[blank.id] || savedInstance.blankValues[blank.id].trim() === '',
+    );
   };
 
   const missingBlanks = getMissingBlanks();
@@ -372,13 +443,14 @@ const StoryView: React.FC<StoryViewProps> = ({
             {savedInstance.savedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
-        
+
         {hasMissingBlanks && !isEditing && (
           <div className="missing-blanks-warning">
             <div className="warning-content">
               <span className="warning-icon">⚠️</span>
               <span className="warning-text">
-                This story has {missingBlanks.length} missing blank value{missingBlanks.length !== 1 ? 's' : ''}.
+                This story has {missingBlanks.length} missing blank value
+                {missingBlanks.length !== 1 ? 's' : ''}.
               </span>
               <button className="fix-blanks-btn" onClick={handleEdit}>
                 Fix Missing Values
