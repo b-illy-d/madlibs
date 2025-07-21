@@ -5,6 +5,8 @@ import EditMode from './components/EditMode';
 import MainView from './components/MainView';
 import PlayMode from './components/PlayMode';
 import ReadView from './components/ReadView';
+import mollyTemplate from './stories/molly/template';
+import mollySavedStories from './stories/molly/saved.json';
 
 function App() {
   const [appState, setAppState] = useState<AppState>({
@@ -39,9 +41,22 @@ function App() {
           sentences: template.sentences || []
         };
       });
-      
-      // Save migrated templates back to localStorage
-      localStorage.setItem('madlibs-stories', JSON.stringify(migratedTemplates));
+
+      // Load hard-coded templates and stories
+      const hardCodedTemplates = [mollyTemplate as Template];
+      const hardCodedSavedStories = mollySavedStories.map((story: any) => ({
+        ...story,
+        savedAt: new Date(story.savedAt)
+      }));
+
+      // De-duplicate templates by ID - localStorage takes precedence over hard-coded
+      const allTemplates = [...migratedTemplates];
+      hardCodedTemplates.forEach(hardCodedTemplate => {
+        const existsInLocalStorage = migratedTemplates.some((t: Template) => t.id === hardCodedTemplate.id);
+        if (!existsInLocalStorage) {
+          allTemplates.push(hardCodedTemplate);
+        }
+      });
       
       const savedInstances = JSON.parse(
         localStorage.getItem('madlibs-saved-instances') || '[]',
@@ -49,11 +64,32 @@ function App() {
         ...instance,
         savedAt: new Date(instance.savedAt),
       }));
+
+      // Merge hard-coded saved stories with localStorage saved stories
+      // De-duplicate by ID - localStorage takes precedence
+      const allSavedStories = [...savedInstances];
+      hardCodedSavedStories.forEach((hardCodedStory: SavedStory) => {
+        const existsInLocalStorage = savedInstances.some((s: SavedStory) => s.id === hardCodedStory.id);
+        if (!existsInLocalStorage) {
+          allSavedStories.push(hardCodedStory);
+        }
+      });
+      
+      // Save merged data back to localStorage if new data was added
+      const templatesChanged = allTemplates.length > migratedTemplates.length;
+      const storiesChanged = allSavedStories.length > savedInstances.length;
+      
+      if (templatesChanged) {
+        localStorage.setItem('madlibs-stories', JSON.stringify(allTemplates));
+      }
+      if (storiesChanged) {
+        localStorage.setItem('madlibs-saved-instances', JSON.stringify(allSavedStories));
+      }
       
       setAppState((prev) => ({
         ...prev,
-        templates: migratedTemplates,
-        savedStories: savedInstances,
+        templates: allTemplates,
+        savedStories: allSavedStories,
       }));
     } catch (error) {
       console.error('Failed to load data from localStorage:', error);

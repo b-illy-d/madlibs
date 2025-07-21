@@ -1200,6 +1200,16 @@
   border-color: #61dafb;
 }
 
+.edit-blank-input-missing {
+  border-color: #dc3545 !important;
+  background-color: #fff5f5;
+}
+
+.edit-blank-input-missing:focus {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
 .edit-preview-section h3 {
   margin: 0 0 1rem 0;
   color: #282c34;

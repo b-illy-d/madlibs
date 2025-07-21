@@ -245,7 +245,11 @@ const StoryView: React.FC<StoryViewProps> = ({
                     </label>
                     <input
                       type="text"
-                      className="edit-blank-input"
+                      className={`edit-blank-input ${
+                        (!editedValues[item.id] || editedValues[item.id].trim() === '') 
+                          ? 'edit-blank-input-missing' 
+                          : ''
+                      }`}
                       value={editedValues[item.id] || ''}
                       onChange={(e) => updateBlankValue(item.id, e.target.value)}
                       placeholder={`Enter a ${blankItem.blank.partOfSpeech.toLowerCase()}...`}
