@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-react-app:*)",
+      "Bash(mv:*)",
+      "Bash(rmdir:*)",
+      "Bash(ls:*)",
+      "Bash(rm:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm run build:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": false
+}

@@ -1,0 +1,262 @@
+import React, { useState, useEffect } from 'react';
+import './App.css';
+import { AppMode, AppState, Template, SavedStory } from './types';
+import EditMode from './components/EditMode';
+import MainView from './components/MainView';
+import PlayMode from './components/PlayMode';
+import ReadView from './components/ReadView';
+
+function App() {
+  const [appState, setAppState] = useState<AppState>({
+    mode: 'main',
+    current: null,
+    templates: [],
+    savedStories: [],
+  });
+
+  const [initialTemplateFilter, setInitialTemplateFilter] = useState<string | undefined>(undefined);
+
+  // Load stories and saved instances from localStorage on startup
+  useEffect(() => {
+    try {
+      const savedStories = JSON.parse(localStorage.getItem('madlibs-stories') || '[]');
+      
+      // Migrate old template structure to new sentence structure
+      const migratedTemplates = savedStories.map((template: any) => {
+        // Check if template is using old structure (has 'content' instead of 'sentences')
+        if (template.content && !template.sentences) {
+          return {
+            ...template,
+            sentences: template.content.length > 0 ? [{
+              id: `sentence-${Date.now()}-migrated`,
+              content: template.content
+            }] : []
+          };
+        }
+        // Template already has new structure or is empty
+        return {
+          ...template,
+          sentences: template.sentences || []
+        };
+      });
+      
+      // Save migrated templates back to localStorage
+      localStorage.setItem('madlibs-stories', JSON.stringify(migratedTemplates));
+      
+      const savedInstances = JSON.parse(
+        localStorage.getItem('madlibs-saved-instances') || '[]',
+      ).map((instance: any) => ({
+        ...instance,
+        savedAt: new Date(instance.savedAt),
+      }));
+      
+      setAppState((prev) => ({
+        ...prev,
+        templates: migratedTemplates,
+        savedStories: savedInstances,
+      }));
+    } catch (error) {
+      console.error('Failed to load data from localStorage:', error);
+    }
+  }, []);
+
+  const setMode = (mode: AppMode) => {
+    setAppState((prev) => ({ ...prev, mode }));
+  };
+
+  const saveStory = (story: Template) => {
+    const updatedTemplates = [...appState.templates.filter((s) => s.id !== story.id), story];
+    setAppState((prev) => ({
+      ...prev,
+      templates: updatedTemplates,
+      current: story,
+    }));
+  };
+
+  const createNewStory = () => {
+    const newStory: Template = {
+      id: Date.now().toString(),
+      title: '',
+      sentences: [],
+    };
+    setAppState((prev) => ({
+      ...prev,
+      mode: 'edit',
+      current: newStory,
+    }));
+  };
+
+  const editTemplate = (template: Template) => {
+    setAppState((prev) => ({
+      ...prev,
+      mode: 'edit',
+      current: template,
+    }));
+  };
+
+  const playTemplate = (template: Template) => {
+    setAppState((prev) => ({
+      ...prev,
+      mode: 'play',
+      current: template,
+    }));
+  };
+
+  const deleteTemplate = (id: string) => {
+    try {
+      const updatedTemplates = appState.templates.filter((s) => s.id !== id);
+      const updatedInstances = appState.savedStories.filter((i) => i.storyId !== id);
+
+      // Update localStorage
+      localStorage.setItem('madlibs-stories', JSON.stringify(updatedTemplates));
+      localStorage.setItem('madlibs-saved-instances', JSON.stringify(updatedInstances));
+
+      // Update state
+      setAppState((prev) => ({
+        ...prev,
+        templates: updatedTemplates,
+        savedStories: updatedInstances,
+        current: prev.current?.id === id ? null : prev.current,
+      }));
+    } catch (error) {
+      console.error('Failed to delete story:', error);
+      alert('Failed to delete story. Please try again.');
+    }
+  };
+
+  const saveStoryInstance = (instance: SavedStory) => {
+    try {
+      const updatedInstances = [...appState.savedStories, instance];
+
+      // Update localStorage
+      localStorage.setItem('madlibs-saved-instances', JSON.stringify(updatedInstances));
+
+      // Update state
+      setAppState((prev) => ({
+        ...prev,
+        savedStories: updatedInstances,
+      }));
+
+      // Navigate back to main
+      setMode('main');
+    } catch (error) {
+      console.error('Failed to save story instance:', error);
+      alert('Failed to save story. Please try again.');
+    }
+  };
+
+  const updateSavedStory = (updatedStory: SavedStory) => {
+    try {
+      const updatedInstances = appState.savedStories.map((story) =>
+        story.id === updatedStory.id ? updatedStory : story,
+      );
+
+      // Update localStorage
+      localStorage.setItem('madlibs-saved-instances', JSON.stringify(updatedInstances));
+
+      // Update state
+      setAppState((prev) => ({
+        ...prev,
+        savedStories: updatedInstances,
+      }));
+    } catch (error) {
+      console.error('Failed to update story:', error);
+      alert('Failed to update story. Please try again.');
+    }
+  };
+
+  const loadTemplate = (template: Template, savedStories: SavedStory[]) => {
+    try {
+      const updatedTemplates = [...appState.templates, template];
+      const updatedInstances = [...appState.savedStories, ...savedStories];
+
+      // Update localStorage
+      localStorage.setItem('madlibs-stories', JSON.stringify(updatedTemplates));
+      localStorage.setItem('madlibs-saved-instances', JSON.stringify(updatedInstances));
+
+      // Update state
+      setAppState((prev) => ({
+        ...prev,
+        templates: updatedTemplates,
+        savedStories: updatedInstances,
+      }));
+
+      alert(`Successfully loaded template "${template.title}" with ${savedStories.length} saved stories.`);
+    } catch (error) {
+      console.error('Failed to load template:', error);
+      alert('Failed to load template. Please try again.');
+    }
+  };
+
+  return (
+    <div className="App">
+      <header className="app-header">
+        <h1>Madlibs Creator</h1>
+        <nav className="mode-nav">
+          <button
+            className={appState.mode === 'main' ? 'active' : ''}
+            onClick={() => setMode('main')}
+          >
+            Templates
+          </button>
+          <button
+            className={appState.mode === 'read' ? 'active' : ''}
+            onClick={() => {
+              setInitialTemplateFilter(undefined);
+              setMode('read');
+            }}
+          >
+            Stories
+          </button>
+        </nav>
+      </header>
+
+      <main className="app-main">
+        {appState.mode === 'main' && (
+          <MainView
+            stories={appState.templates}
+            savedInstances={appState.savedStories}
+            onCreateNew={createNewStory}
+            onEditTemplate={editTemplate}
+            onPlayTemplate={playTemplate}
+            onDeleteTemplate={deleteTemplate}
+            onReadStories={(templateId?: string) => {
+              setInitialTemplateFilter(templateId);
+              setMode('read');
+            }}
+            onLoadTemplate={loadTemplate}
+          />
+        )}
+        {appState.mode === 'edit' && appState.current && (
+          <EditMode
+            story={appState.current}
+            onSaveStory={saveStory}
+            onBackToMain={() => setMode('main')}
+          />
+        )}
+        {appState.mode === 'play' && appState.current && (
+          <PlayMode
+            story={appState.current}
+            onBackToMain={() => setMode('main')}
+            onSaveStoryInstance={saveStoryInstance}
+          />
+        )}
+        {appState.mode === 'read' && (
+          <ReadView
+            templates={appState.templates}
+            savedInstances={appState.savedStories}
+            onBackToMain={() => {
+              setInitialTemplateFilter(undefined);
+              setMode('main');
+            }}
+            onUpdateSavedStory={updateSavedStory}
+            onPlayTemplate={playTemplate}
+            initialTemplateFilter={initialTemplateFilter}
+          />
+        )}
+      </main>
+    </div>
+  );
+}
+
+export default App;
