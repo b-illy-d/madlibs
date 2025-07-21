@@ -201,28 +201,6 @@ function App() {
     }
   };
 
-  const loadTemplate = (template: Template, savedStories: SavedStory[]) => {
-    try {
-      const updatedTemplates = [...appState.templates, template];
-      const updatedInstances = [...appState.savedStories, ...savedStories];
-
-      // Update localStorage
-      localStorage.setItem('madlibs-stories', JSON.stringify(updatedTemplates));
-      localStorage.setItem('madlibs-saved-instances', JSON.stringify(updatedInstances));
-
-      // Update state
-      setAppState((prev) => ({
-        ...prev,
-        templates: updatedTemplates,
-        savedStories: updatedInstances,
-      }));
-
-      alert(`Successfully loaded template "${template.title}" with ${savedStories.length} saved stories.`);
-    } catch (error) {
-      console.error('Failed to load template:', error);
-      alert('Failed to load template. Please try again.');
-    }
-  };
 
   return (
     <div className="App">
@@ -260,7 +238,6 @@ function App() {
               setInitialTemplateFilter(templateId);
               setMode('read');
             }}
-            onLoadTemplate={loadTemplate}
           />
         )}
         {appState.mode === 'edit' && appState.current && (

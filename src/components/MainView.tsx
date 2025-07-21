@@ -9,7 +9,6 @@ interface MainViewProps {
   onPlayTemplate: (template: Template) => void;
   onDeleteTemplate: (id: string) => void;
   onReadStories: (templateId?: string) => void;
-  onLoadTemplate: (template: Template, savedStories: SavedStory[]) => void;
 }
 
 const MainView: React.FC<MainViewProps> = ({
@@ -20,52 +19,7 @@ const MainView: React.FC<MainViewProps> = ({
   onPlayTemplate,
   onDeleteTemplate,
   onReadStories,
-  onLoadTemplate,
 }) => {
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const jsonData = JSON.parse(e.target?.result as string);
-        
-        // Validate JSON structure
-        if (!jsonData.template || !jsonData.savedStories) {
-          alert('Invalid template file format. Please select a valid template export.');
-          return;
-        }
-
-        // Generate new IDs to avoid conflicts
-        const newTemplateId = Date.now().toString();
-        const updatedTemplate = {
-          ...jsonData.template,
-          id: newTemplateId,
-          title: jsonData.template.title + ' (Imported)'
-        };
-
-        // Update saved stories to reference the new template ID
-        const updatedSavedStories = jsonData.savedStories.map((story: any) => ({
-          ...story,
-          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-          storyId: newTemplateId,
-          savedAt: new Date(story.savedAt)
-        }));
-
-        onLoadTemplate(updatedTemplate, updatedSavedStories);
-        
-        // Clear the input for future uploads
-        event.target.value = '';
-        
-      } catch (error) {
-        console.error('Error parsing template file:', error);
-        alert('Error reading template file. Please make sure it\'s a valid JSON export.');
-      }
-    };
-
-    reader.readAsText(file);
-  };
   return (
     <div className="main-view">
       <div className="main-header">
@@ -74,21 +28,6 @@ const MainView: React.FC<MainViewProps> = ({
           <button className="read-all-stories-btn" onClick={() => onReadStories()}>
             Read Saved Stories
           </button>
-          <div className="load-template-container">
-            <input
-              type="file"
-              id="template-upload"
-              accept=".json"
-              onChange={handleFileUpload}
-              style={{ display: 'none' }}
-            />
-            <button 
-              className="load-template-btn" 
-              onClick={() => document.getElementById('template-upload')?.click()}
-            >
-              Load Template
-            </button>
-          </div>
           <button className="create-new-btn" onClick={onCreateNew}>
             Create New Template
           </button>
@@ -178,35 +117,6 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
     onPlay();
   };
 
-  const handleDownload = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    
-    // Create export data with template and related saved stories
-    const exportData = {
-      template: story,
-      savedStories: savedInstances,
-      exportedAt: new Date().toISOString(),
-      version: "1.0"
-    };
-
-    // Convert to JSON string
-    const jsonData = JSON.stringify(exportData, null, 2);
-    
-    // Create blob and download
-    const blob = new Blob([jsonData], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    // Create temporary download link
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${story.title || 'template'}-export.json`;
-    document.body.appendChild(link);
-    link.click();
-    
-    // Cleanup
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <div className="story-card">
@@ -246,9 +156,6 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
             Read ({savedInstances.length})
           </button>
         )}
-        <button className="download-story-btn" onClick={handleDownload}>
-          Download
-        </button>
         <button className="delete-story-btn" onClick={handleDelete}>
           Delete
         </button>

@@ -181,25 +181,6 @@
   transition: background-color 0.3s ease;
 }
 
-.load-template-btn {
-  padding: 0.75rem 1.5rem;
-  background-color: #fd7e14;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.load-template-btn:hover {
-  background-color: #e8650e;
-}
-
-.load-template-container {
-  position: relative;
-}
 
 .create-new-btn:hover {
   background-color: #45a049;
@@ -384,21 +365,6 @@
   color: white;
 }
 
-.download-story-btn {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background-color: #17a2b8;
-  color: white;
-}
-
-.download-story-btn:hover {
-  background-color: #138496;
-}
 
 .delete-story-btn:hover {
   background-color: #c82333;
@@ -1974,13 +1940,7 @@
     color: #212529;
   }
 
-  .load-template-btn {
-    color: white;
-  }
 
-  .download-story-btn {
-    color: white;
-  }
 
   .delete-story-btn {
     color: white;

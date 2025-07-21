@@ -106,6 +106,7 @@ export default {
           type: 'blank',
           blank: {
             partOfSpeech: 'adverb',
+            hint: 'ends in -ly',
           },
         },
         {
@@ -172,7 +173,7 @@ export default {
           type: 'blank',
           blank: {
             partOfSpeech: 'song name',
-            hint: 'should be "Closer"',
+            hint: 'should be "Closer" by the Chainsmokers',
           },
         },
         {
